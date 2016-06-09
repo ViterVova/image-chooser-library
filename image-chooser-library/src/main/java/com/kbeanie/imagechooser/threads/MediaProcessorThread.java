@@ -74,6 +74,11 @@ public abstract class MediaProcessorThread extends Thread {
     private final static int THUMBNAIL_BIG = 1;
 
     private final static int THUMBNAIL_SMALL = 2;
+
+    private final static String THUMBNAIL_SMALL_FOLDER="small";
+
+    private final static String THUMBNAIL_BIG_FOLDER="big";
+
     protected String[] filePaths = new String[0];
 
     protected String filePath;
@@ -251,10 +256,16 @@ public abstract class MediaProcessorThread extends Thread {
                 return fileImage;
             }
             File original = new File(fileImage);
-            File file = new File(
-                    (original.getParent() + File.separator + original.getName()
-                            .replace(".", "_fact_" + scale + ".")));
+            File file=null;
+            if (THUMBNAIL_BIG==scale){
+                 file = new File
+                        (original.getParent() + File.separator + THUMBNAIL_BIG_FOLDER+  File.separator + original.getName());
+            }else if (THUMBNAIL_SMALL==scale){
+                file = new File
+                        (original.getParent() + File.separator + THUMBNAIL_SMALL_FOLDER + File.separator + original.getName());
+            }
             stream = new FileOutputStream(file);
+            Log.e(TAG,file.getAbsolutePath());
             if (rotate != 0) {
                 Matrix matrix = new Matrix();
                 matrix.setRotate(rotate);

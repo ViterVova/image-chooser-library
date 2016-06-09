@@ -32,6 +32,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 
 import com.kbeanie.imagechooser.exceptions.ChooserException;
 import com.kbeanie.imagechooser.factory.UriFactory;
@@ -48,6 +49,10 @@ public abstract class BChooser {
     protected Fragment fragment;
 
     protected android.app.Fragment appFragment;
+
+    private final static String THUMBNAIL_SMALL_FOLDER="small";
+
+    private final static String THUMBNAIL_BIG_FOLDER="big";
 
     protected int type;
 
@@ -142,14 +147,28 @@ public abstract class BChooser {
     public abstract void submit(int requestCode, Intent data);
 
     protected void checkDirectory() throws ChooserException {
-        File directory;
+        File directory,small,big;
+        small =new File(FileUtils.getDirectory(foldername+File.separator+THUMBNAIL_SMALL_FOLDER));
+        big=new File(FileUtils.getDirectory(foldername+File.separator+THUMBNAIL_BIG_FOLDER));
         directory = new File(FileUtils.getDirectory(foldername));
+        Log.e(TAG,big.getAbsolutePath());
+        Log.e(TAG,small.getAbsolutePath());
         if (!directory.exists()) {
             if (!directory.mkdirs() && !directory.isDirectory()) {
                 throw new ChooserException("Error creating directory: " + directory);
             }
         }
-    }
+        if (!small.exists()) {
+            if (!small.mkdirs() && !small.isDirectory()) {
+                throw new ChooserException("Error creating directory: " + small);
+            }
+        }
+        if (!big.exists()) {
+            if (!big.mkdirs() && !big.isDirectory()) {
+                throw new ChooserException("Error creating directory: " + big);
+            }
+        }
+        }
 
     @SuppressLint("NewApi")
     protected void startActivity(Intent intent) {
