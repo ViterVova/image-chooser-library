@@ -19,13 +19,10 @@
 package com.beanie.imagechooserapp;
 
 import java.io.File;
-import java.util.ArrayList;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.View;
@@ -36,15 +33,9 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.crashlytics.android.Crashlytics;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
 import com.kbeanie.imagechooser.api.ChooserType;
-import com.kbeanie.imagechooser.api.ChosenFile;
 import com.kbeanie.imagechooser.api.ChosenImage;
 import com.kbeanie.imagechooser.api.ChosenImages;
-import com.kbeanie.imagechooser.api.FileChooserListener;
-import com.kbeanie.imagechooser.api.FileChooserManager;
 import com.kbeanie.imagechooser.api.ImageChooserListener;
 import com.kbeanie.imagechooser.api.ImageChooserManager;
 import com.kbeanie.imagechooser.api.IntentUtils;
@@ -169,17 +160,16 @@ public class ImageChooserActivity extends BasicActivity implements
             public void run() {
                 Log.i(TAG, "Chosen Image: O - " + image.getFilePathOriginal());
                 Log.i(TAG, "Chosen Image: T - " + image.getFileThumbnail());
-                Log.i(TAG, "Chosen Image: Ts - " + image.getFileThumbnailSmall());
                 isActivityResultOver = true;
                 originalFilePath = image.getFilePathOriginal();
                 thumbnailFilePath = image.getFileThumbnail();
-                thumbnailSmallFilePath = image.getFileThumbnailSmall();
+                thumbnailSmallFilePath = image.getFileThumbnail();
                 pbar.setVisibility(View.GONE);
                 if (image != null) {
                     Log.i(TAG, "Chosen Image: Is not null");
                     textViewFile.setText(image.getFilePathOriginal());
-                    loadImage(imageViewThumbnail, image.getFileThumbnail());
-                    loadImage(imageViewThumbSmall, image.getFileThumbnailSmall());
+                    loadImage(imageViewThumbnail, image.getFilePathOriginal());
+                    loadImage(imageViewThumbSmall,image.getFileThumbnail());
                 } else {
                     Log.i(TAG, "Chosen Image: Is null");
                 }

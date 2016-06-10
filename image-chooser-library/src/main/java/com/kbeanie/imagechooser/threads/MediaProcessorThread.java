@@ -41,7 +41,6 @@ import android.util.Log;
 
 import com.kbeanie.imagechooser.BuildConfig;
 import com.kbeanie.imagechooser.api.ChosenImage;
-import com.kbeanie.imagechooser.api.ChosenVideo;
 import com.kbeanie.imagechooser.api.FileUtils;
 import com.kbeanie.imagechooser.exceptions.ChooserException;
 
@@ -66,18 +65,10 @@ import static com.kbeanie.imagechooser.helpers.StreamHelper.verifyStream;
 public abstract class MediaProcessorThread extends Thread {
     private final static String TAG = MediaProcessorThread.class.getSimpleName();
 
-    // 500 MB Cache size
-    protected final static int MAX_DIRECTORY_SIZE = 500 * 1024 * 1024;
     // Number of days to preserve 10 days
     protected final static int MAX_THRESHOLD_DAYS = (int) (10 * 24 * 60 * 60 * 1000);
 
-    private final static int THUMBNAIL_BIG = 1;
-
-    private final static int THUMBNAIL_SMALL = 2;
-
-    private final static String THUMBNAIL_SMALL_FOLDER="small";
-
-    private final static String THUMBNAIL_BIG_FOLDER="big";
+    private final static int THUMBNAIL_SMALL= 2;
 
     protected String[] filePaths = new String[0];
 
@@ -85,7 +76,9 @@ public abstract class MediaProcessorThread extends Thread {
 
     protected Context context;
 
-    protected String foldername;
+    protected String mainFolderName;
+
+    protected String thumbnailFolderName;
 
     protected boolean shouldCreateThumnails;
 
@@ -94,16 +87,18 @@ public abstract class MediaProcessorThread extends Thread {
     protected boolean clearOldFiles = false;
 
 
-    public MediaProcessorThread(String filePath, String foldername,
+    public MediaProcessorThread(String filePath, String foldername,String thumbnailFolderName,
                                 boolean shouldCreateThumbnails) {
         this.filePath = filePath;
-        this.foldername = foldername;
+        this.mainFolderName = foldername;
+        this.thumbnailFolderName=thumbnailFolderName;
         this.shouldCreateThumnails = shouldCreateThumbnails;
     }
 
-    public MediaProcessorThread(String[] filePaths, String foldername, boolean shouldCreateThumnails) {
+    public MediaProcessorThread(String[] filePaths, String foldername, String thumbnailFolderName, boolean shouldCreateThumnails) {
         this.filePaths = filePaths;
-        this.foldername = foldername;
+        this.mainFolderName = foldername;
+        this.thumbnailFolderName=thumbnailFolderName;
         this.shouldCreateThumnails = shouldCreateThumnails;
     }
 
@@ -119,43 +114,16 @@ public abstract class MediaProcessorThread extends Thread {
         this.clearOldFiles = clearOldFiles;
     }
 
-    protected void downloadAndProcess(String url) throws ChooserException {
-        filePath = downloadFile(url);
-        process();
-    }
-
-    protected ChosenVideo downloadAndProcessVideo(String url) throws ChooserException {
-        String localFile = downloadFile(url);
-        ChosenVideo video = processVideo(localFile);
-        return video;
-    }
-
-    protected ChosenImage downloadAndProcessNew(String url) throws ChooserException {
-        String downloadedFilePath = downloadFile(url);
-        ChosenImage image = processImage(downloadedFilePath);
-        return image;
-    }
-
     protected void process() throws ChooserException {
-        if (!filePath.contains(foldername)) {
+        if (!filePath.contains(mainFolderName)) {
             copyFileToDir();
         }
     }
 
-    protected ChosenVideo processVideo(String filePath) throws ChooserException {
-        ChosenVideo video = new ChosenVideo();
-        if (!filePath.contains(foldername)) {
-            String localFilePath = copyFileToDir(filePath);
-            video.setVideoFilePath(localFilePath);
-        } else {
-            video.setVideoFilePath(filePath);
-        }
-        return video;
-    }
 
     protected ChosenImage processImage(String filePath) throws ChooserException {
         ChosenImage image = new ChosenImage();
-        if (!filePath.contains(foldername)) {
+        if (!filePath.contains(mainFolderName)) {
             String localFilePath = copyFileToDir(filePath);
             image.setFilePathOriginal(localFilePath);
         } else {
@@ -164,19 +132,10 @@ public abstract class MediaProcessorThread extends Thread {
         return image;
     }
 
-    protected String[] createThumbnails(String image) throws ChooserException {
-        String[] images = new String[2];
-        images[0] = getThumbnailPath(image);
-        images[1] = getThumbnailSmallPath(image);
-        return images;
+    protected String createThumbnail(String image) throws ChooserException {
+        return getThumbnailSmallPath(image);
     }
 
-    private String getThumbnailPath(String file) throws ChooserException {
-        if (BuildConfig.DEBUG) {
-            Log.i(TAG, "Compressing ... THUMBNAIL");
-        }
-        return compressAndSaveImage(file, THUMBNAIL_BIG);
-    }
 
     private String getThumbnailSmallPath(String file) throws ChooserException {
         if (BuildConfig.DEBUG) {
@@ -184,6 +143,7 @@ public abstract class MediaProcessorThread extends Thread {
         }
         return compressAndSaveImage(file, THUMBNAIL_SMALL);
     }
+
 
     private String compressAndSaveImage(String fileImage, int scale) throws ChooserException {
 
@@ -250,22 +210,19 @@ public abstract class MediaProcessorThread extends Thread {
             // Thumbnails will link to the original file
             BufferedInputStream scaledInputStream = new BufferedInputStream(new FileInputStream(fileImage));
             bitmap = BitmapFactory.decodeStream(scaledInputStream, null, options);
-//            verifyBitmap(fileImage, bitmap);
+            //verifyBitmap(fileImage, bitmap);
             scaledInputStream.close();
             if (bitmap == null) {
                 return fileImage;
             }
             File original = new File(fileImage);
             File file=null;
-            if (THUMBNAIL_BIG==scale){
+            if (THUMBNAIL_SMALL==scale){
                  file = new File
-                        (original.getParent() + File.separator + THUMBNAIL_BIG_FOLDER+  File.separator + original.getName());
-            }else if (THUMBNAIL_SMALL==scale){
-                file = new File
-                        (original.getParent() + File.separator + THUMBNAIL_SMALL_FOLDER + File.separator + original.getName());
+                        (original.getParent() + File.separator + thumbnailFolderName+  File.separator + original.getName());
+                Log.e(TAG,"Mip-map"+file.getAbsolutePath());
             }
             stream = new FileOutputStream(file);
-            Log.e(TAG,file.getAbsolutePath());
             if (rotate != 0) {
                 Matrix matrix = new Matrix();
                 matrix.setRotate(rotate);
@@ -279,7 +236,6 @@ public abstract class MediaProcessorThread extends Thread {
 
         } catch (IOException e) {
             return fileImage;
-//            throw new ChooserException(e);
         } catch (Exception e) {
             return fileImage;
         } finally {
@@ -295,7 +251,7 @@ public abstract class MediaProcessorThread extends Thread {
         try {
             File file;
             file = new File(Uri.parse(filePath).getPath());
-            File copyTo = new File(FileUtils.getDirectory(foldername) + File.separator + file.getName());
+            File copyTo = new File(FileUtils.getDirectory(mainFolderName) + File.separator + file.getName());
             bStream = new BufferedInputStream(new FileInputStream(file));
             outStream = new BufferedOutputStream(new FileOutputStream(copyTo));
             byte[] buf = new byte[2048];
@@ -321,7 +277,7 @@ public abstract class MediaProcessorThread extends Thread {
         try {
             File file;
             file = new File(Uri.parse(filePath).getPath());
-            File copyTo = new File(FileUtils.getDirectory(foldername) + File.separator + file.getName());
+            File copyTo = new File(FileUtils.getDirectory(mainFolderName) + File.separator + file.getName());
             bStream = new BufferedInputStream(new FileInputStream(file));
             outStream = new BufferedOutputStream(new FileOutputStream(copyTo));
             byte[] buf = new byte[2048];
@@ -341,90 +297,9 @@ public abstract class MediaProcessorThread extends Thread {
     }
 
 
-    protected String downloadFile(String url) {
-        String localFilePath = "";
-        try {
-            URL u = new URL(url);
-            HttpURLConnection urlConnection = (HttpURLConnection) u.openConnection();
-            InputStream stream = new BufferedInputStream(urlConnection.getInputStream());
-            BufferedInputStream bStream = new BufferedInputStream(stream);
 
-            localFilePath = FileUtils.getDirectory(foldername) + File.separator
-                    + Calendar.getInstance().getTimeInMillis() + "."
-                    + mediaExtension;
-            File localFile = new File(localFilePath);
 
-            FileOutputStream fileOutputStream = new FileOutputStream(localFile);
-
-            byte[] buffer = new byte[1024];
-            int len;
-            while ((len = bStream.read(buffer)) > 0)
-                fileOutputStream.write(buffer, 0, len);
-            fileOutputStream.flush();
-            fileOutputStream.close();
-            bStream.close();
-
-            if (BuildConfig.DEBUG) {
-                Log.i(TAG, "Image saved: " + localFilePath.toString());
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return localFilePath;
-    }
-
-    protected void manageDirectoryCache(final String extension) {
-        if (!clearOldFiles) {
-            return;
-        }
-        File directory;
-        directory = new File(FileUtils.getDirectory(foldername));
-        File[] files = directory.listFiles();
-        long count = 0;
-        if (files == null) {
-            return;
-        }
-        for (File file : files) {
-            count = count + file.length();
-        }
-        if (BuildConfig.DEBUG) {
-            Log.i(TAG, "Directory size: " + count);
-        }
-
-        if (count > MAX_DIRECTORY_SIZE) {
-            final long today = Calendar.getInstance().getTimeInMillis();
-            FileFilter filter = new FileFilter() {
-
-                @Override
-                public boolean accept(File pathname) {
-                    if (today - pathname.lastModified() > MAX_THRESHOLD_DAYS
-                            && pathname
-                            .getAbsolutePath()
-                            .toUpperCase(Locale.ENGLISH)
-                            .endsWith(
-                                    extension
-                                            .toUpperCase(Locale.ENGLISH))) {
-                        return true;
-                    } else {
-                        return false;
-                    }
-                }
-            };
-
-            File[] filterFiles = directory.listFiles(filter);
-            int deletedFileCount = 0;
-            for (File file : filterFiles) {
-                deletedFileCount++;
-                file.delete();
-            }
-            Log.i(TAG, "Deleted " + deletedFileCount + " files");
-        }
-    }
-
-    protected abstract void processingDone(String file, String thumbnail,
-                                           String thumbnailSmall);
+    protected abstract void processingDone(String file, String thumbnail);
 
     protected void processPicasaMedia(String path, String extension) throws ChooserException {
         if (BuildConfig.DEBUG) {
@@ -442,7 +317,7 @@ public abstract class MediaProcessorThread extends Thread {
 
             verifyStream(path, bStream);
 
-            filePath = FileUtils.getDirectory(foldername) + File.separator
+            filePath = FileUtils.getDirectory(mainFolderName) + File.separator
                     + Calendar.getInstance().getTimeInMillis() + extension;
 
             outStream = new BufferedOutputStream(new FileOutputStream(filePath));
@@ -465,45 +340,6 @@ public abstract class MediaProcessorThread extends Thread {
         }
     }
 
-    protected ChosenVideo processPicasaMediaNewVideo(String path, String extension) throws ChooserException {
-        if (BuildConfig.DEBUG) {
-            Log.i(TAG, "Picasa Started");
-        }
-
-        ChosenVideo video = null;
-        BufferedOutputStream outStream = null;
-        BufferedInputStream bStream = null;
-        String outFile;
-        try {
-            InputStream inputStream = context.getContentResolver()
-                    .openInputStream(Uri.parse(path));
-
-            bStream = new BufferedInputStream(inputStream);
-
-            verifyStream(path, bStream);
-
-            outFile = FileUtils.getDirectory(foldername) + File.separator
-                    + Calendar.getInstance().getTimeInMillis() + extension;
-
-            outStream = new BufferedOutputStream(new FileOutputStream(outFile));
-            byte[] buf = new byte[2048];
-            int len;
-            while ((len = bStream.read(buf)) > 0) {
-                outStream.write(buf, 0, len);
-            }
-            flush(outStream);
-            video = processVideo(outFile);
-        } catch (IOException e) {
-            throw new ChooserException(e);
-        } finally {
-            close(bStream);
-            close(outStream);
-        }
-        if (BuildConfig.DEBUG) {
-            Log.i(TAG, "Picasa Done");
-        }
-        return video;
-    }
 
     protected ChosenImage processPicasaMediaNew(String path, String extension) throws ChooserException {
         if (BuildConfig.DEBUG) {
@@ -523,7 +359,7 @@ public abstract class MediaProcessorThread extends Thread {
 
             verifyStream(path, bStream);
 
-            outFile = FileUtils.getDirectory(foldername) + File.separator
+            outFile = FileUtils.getDirectory(mainFolderName) + File.separator
                     + Calendar.getInstance().getTimeInMillis() + extension;
 
             outStream = new BufferedOutputStream(new FileOutputStream(outFile));
@@ -566,7 +402,7 @@ public abstract class MediaProcessorThread extends Thread {
 
         try {
 
-            filePath = FileUtils.getDirectory(foldername) + File.separator
+            filePath = FileUtils.getDirectory(mainFolderName) + File.separator
                     + Calendar.getInstance().getTimeInMillis() + extension;
             ParcelFileDescriptor parcelFileDescriptor = context
                     .getContentResolver().openFileDescriptor(Uri.parse(path),
@@ -604,63 +440,6 @@ public abstract class MediaProcessorThread extends Thread {
         }
     }
 
-    protected ChosenVideo processGooglePhotosMediaNewVideo(String path, String extension)
-            throws ChooserException {
-        ChosenVideo video;
-        if (BuildConfig.DEBUG) {
-            Log.i(TAG, "Google photos Started");
-            Log.i(TAG, "URI: " + path);
-            Log.i(TAG, "Extension: " + extension);
-        }
-        String retrievedExtension = checkExtension(Uri.parse(path));
-        if (retrievedExtension != null
-                && !TextUtils.isEmpty(retrievedExtension)) {
-            extension = "." + retrievedExtension;
-        }
-
-        BufferedInputStream inputStream = null;
-        BufferedOutputStream outStream = null;
-        String localPath;
-        try {
-
-            localPath = FileUtils.getDirectory(foldername) + File.separator
-                    + Calendar.getInstance().getTimeInMillis() + extension;
-            ParcelFileDescriptor parcelFileDescriptor = context
-                    .getContentResolver().openFileDescriptor(Uri.parse(path),
-                            "r");
-
-            verifyStream(path, parcelFileDescriptor);
-
-            FileDescriptor fileDescriptor = parcelFileDescriptor
-                    .getFileDescriptor();
-
-            inputStream = new BufferedInputStream(new FileInputStream(fileDescriptor));
-
-            BufferedInputStream reader = new BufferedInputStream(inputStream);
-
-            outStream = new BufferedOutputStream(
-                    new FileOutputStream(localPath));
-            byte[] buf = new byte[2048];
-            int len;
-            while ((len = reader.read(buf)) > 0) {
-                outStream.write(buf, 0, len);
-            }
-            flush(outStream);
-            video  = processVideo(localPath);
-        } catch (IOException e) {
-            throw new ChooserException(e);
-        } finally {
-            flush(outStream);
-            close(outStream);
-            close(inputStream);
-        }
-
-
-        if (BuildConfig.DEBUG) {
-            Log.i(TAG, "Picasa Done");
-        }
-        return video;
-    }
 
     protected ChosenImage processGooglePhotosMediaNew(String path, String extension)
             throws ChooserException {
@@ -682,7 +461,7 @@ public abstract class MediaProcessorThread extends Thread {
 
         try {
 
-            outFile = FileUtils.getDirectory(foldername) + File.separator
+            outFile = FileUtils.getDirectory(mainFolderName) + File.separator
                     + Calendar.getInstance().getTimeInMillis() + extension;
             ParcelFileDescriptor parcelFileDescriptor = context
                     .getContentResolver().openFileDescriptor(Uri.parse(path),
@@ -776,75 +555,6 @@ public abstract class MediaProcessorThread extends Thread {
         return extension;
     }
 
-    protected void processContentProviderMedia(String path, String extension)
-            throws ChooserException {
-        checkExtension(Uri.parse(path));
-
-        InputStream inputStream = null;
-        BufferedOutputStream outStream = null;
-        BufferedInputStream bStream = null;
-
-        try {
-            inputStream = context.getContentResolver()
-                    .openInputStream(Uri.parse(path));
-            bStream = new BufferedInputStream(inputStream);
-            verifyStream(path, bStream);
-
-            filePath = FileUtils.getDirectory(foldername) + File.separator
-                    + Calendar.getInstance().getTimeInMillis() + extension;
-
-            outStream = new BufferedOutputStream(new FileOutputStream(filePath));
-            byte[] buf = new byte[2048];
-            int len;
-            while ((len = bStream.read(buf)) > 0) {
-                outStream.write(buf, 0, len);
-            }
-
-            process();
-        } catch (IOException e) {
-            Log.e(TAG, e.getMessage(), e);
-            throw new ChooserException(e);
-        } finally {
-            close(bStream);
-            close(outStream);
-        }
-    }
-
-    protected ChosenVideo processContentProviderMediaNewVideo(String path, String extension)
-            throws ChooserException {
-        checkExtension(Uri.parse(path));
-        ChosenVideo video = null;
-        InputStream inputStream = null;
-        BufferedOutputStream outStream = null;
-        BufferedInputStream bStream = null;
-        String outFile;
-        try {
-            inputStream = context.getContentResolver()
-                    .openInputStream(Uri.parse(path));
-            bStream = new BufferedInputStream(inputStream);
-            verifyStream(path, bStream);
-
-            outFile = FileUtils.getDirectory(foldername) + File.separator
-                    + Calendar.getInstance().getTimeInMillis() + extension;
-
-            outStream = new BufferedOutputStream(new FileOutputStream(outFile));
-            byte[] buf = new byte[2048];
-            int len;
-            while ((len = bStream.read(buf)) > 0) {
-                outStream.write(buf, 0, len);
-            }
-
-            video = processVideo(path);
-
-        } catch (IOException e) {
-            Log.e(TAG, e.getMessage(), e);
-            throw new ChooserException(e);
-        } finally {
-            close(bStream);
-            close(outStream);
-        }
-        return video;
-    }
 
     @SuppressLint("NewApi")
     protected String getAbsoluteImagePathFromUri(Uri imageUri) {

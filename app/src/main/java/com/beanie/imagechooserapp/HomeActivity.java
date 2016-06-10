@@ -44,9 +44,8 @@ public class HomeActivity extends BasicActivity {
         setContentView(R.layout.activity_home);
         setupAds();
 
-        // One time call to setup the folder to be used for all files
         BChooserPreferences preferences = new BChooserPreferences(getApplicationContext());
-        preferences.setFolderName("ICL");
+        preferences.setFolderName("icl","mip-map");
     }
 
     public void gotoImageChooserFragment(View view) {
@@ -59,18 +58,4 @@ public class HomeActivity extends BasicActivity {
         startActivity(intent);
     }
 
-    public void gotoVideoChooser(View view) {
-        Intent intent = new Intent(this, VideoChooserActivity.class);
-        startActivity(intent);
-    }
-
-    public void gotoMediaChooser(View view) {
-        Intent intent = new Intent(this, MediaChooserActivity.class);
-        startActivity(intent);
-    }
-
-    public void gotoFileChooser(View view) {
-        Intent intent = new Intent(this, FileChooserActivity.class);
-        startActivity(intent);
-    }
 }

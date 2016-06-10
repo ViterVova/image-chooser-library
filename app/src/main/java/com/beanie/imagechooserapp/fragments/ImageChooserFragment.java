@@ -159,7 +159,7 @@ public class ImageChooserFragment extends Fragment implements
         Log.d(getClass().getName(), "onImageChosen: " + image.getFilePathOriginal());
         finalPath = image.getFilePathOriginal();
         thumbPath = image.getFileThumbnail();
-        thumbPathSmall = image.getFileThumbnailSmall();
+        thumbPathSmall = image.getFileThumbnail();
         this.activity.runOnUiThread(new Runnable() {
 
             @Override
@@ -170,7 +170,7 @@ public class ImageChooserFragment extends Fragment implements
                     imageViewThumbnail.setImageURI(Uri.parse(new File(image
                             .getFileThumbnail()).toString()));
                     imageViewThumbSmall.setImageURI(Uri.parse(new File(image
-                            .getFileThumbnailSmall()).toString()));
+                            .getFileThumbnail()).toString()));
                 }
             }
         });

@@ -8,8 +8,11 @@ import android.content.SharedPreferences;
  * Created by kbibek on 5/22/15.
  */
 public class BChooserPreferences {
+
     private final static String FILE = "b_chooser_prefs";
-    private final static String FOLDER_NAME = "folder_name";
+    private final static String MAIN_FOLDER_NAME = "folder_name";
+    private final static String THUMBNAIL_FOLDER_NAME="thumbnail_foleder_name";
+
     private SharedPreferences preferences;
 
     public BChooserPreferences(Context context) {
@@ -20,14 +23,18 @@ public class BChooserPreferences {
      * Set the folder name to be used for all files or temporary files
      * @param folderName
      */
-    public void setFolderName(String folderName){
+    public void setFolderName(String folderName,String thumbnailFolder){
         SharedPreferences.Editor editor = preferences.edit();
-        editor.putString(FOLDER_NAME, folderName);
+        editor.putString(MAIN_FOLDER_NAME, folderName);
+        editor.putString(THUMBNAIL_FOLDER_NAME,thumbnailFolder);
         editor.commit();
     }
 
     public String getFolderName(){
-        return preferences.getString(FOLDER_NAME, "bichooser");
+        return preferences.getString(MAIN_FOLDER_NAME, "spot2r");
     }
 
+    public String getThumbnailFolderName(){
+        return preferences.getString(THUMBNAIL_FOLDER_NAME, "mipmap");
+    }
 }

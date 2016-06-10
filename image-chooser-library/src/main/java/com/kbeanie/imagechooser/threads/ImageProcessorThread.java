@@ -35,14 +35,14 @@ public class ImageProcessorThread extends MediaProcessorThread {
 
     private boolean isMultiple;
 
-    public ImageProcessorThread(String filePath, String foldername,
+    public ImageProcessorThread(String filePath, String foldername,String thumbnailFolderName,
                                 boolean shouldCreateThumbnails) {
-        super(filePath, foldername, shouldCreateThumbnails);
+        super(filePath, foldername, thumbnailFolderName,shouldCreateThumbnails);
         setMediaExtension("jpg");
     }
 
-    public ImageProcessorThread(String[] filePaths, String foldername, boolean shouldCreateThumbnails) {
-        super(filePaths, foldername, shouldCreateThumbnails);
+    public ImageProcessorThread(String[] filePaths, String foldername,String thumbnailFolderName, boolean shouldCreateThumbnails) {
+        super(filePaths, foldername,thumbnailFolderName, shouldCreateThumbnails);
         isMultiple = true;
     }
 
@@ -57,7 +57,6 @@ public class ImageProcessorThread extends MediaProcessorThread {
     @Override
     public void run() {
         try {
-            manageDirectoryCache("jpg");
             if (!isMultiple) {
                 processImage();
             } else {
@@ -88,9 +87,6 @@ public class ImageProcessorThread extends MediaProcessorThread {
                 if (listener != null) {
                     listener.onError("Couldn't process a null file");
                 }
-            } else if (filePath.startsWith("http")) {
-                ChosenImage image = downloadAndProcessNew(filePath);
-                images.addImage(image);
             } else if (filePath
                     .startsWith("content://com.google.android.gallery3d")
                     || filePath
@@ -131,8 +127,6 @@ public class ImageProcessorThread extends MediaProcessorThread {
             if (listener != null) {
                 listener.onError("Couldn't process a null file");
             }
-        } else if (filePath.startsWith("http")) {
-            downloadAndProcess(filePath);
         } else if (filePath
                 .startsWith("content://com.google.android.gallery3d")
                 || filePath
@@ -159,31 +153,28 @@ public class ImageProcessorThread extends MediaProcessorThread {
     protected void process() throws ChooserException {
         super.process();
         if (shouldCreateThumnails) {
-            String[] thumbnails = createThumbnails(this.filePath);
-            processingDone(this.filePath, thumbnails[0], thumbnails[1]);
+            String thumbnailPath = createThumbnail(this.filePath);
+            processingDone(this.filePath, thumbnailPath);
         } else {
-            processingDone(this.filePath, this.filePath, this.filePath);
+            processingDone(this.filePath, this.filePath);
         }
     }
 
     protected ChosenImage process(String filePath) throws ChooserException {
         ChosenImage image = super.processImage(filePath);
         if (shouldCreateThumnails) {
-            String[] thumbnails = createThumbnails(filePath);
-            image.setFileThumbnail(thumbnails[0]);
-            image.setFileThumbnailSmall(thumbnails[1]);
+            String thumbnailPath = createThumbnail(this.filePath);
+            image.setFileThumbnail(thumbnailPath);
         }
         return image;
     }
 
     @Override
-    protected void processingDone(String original, String thumbnail,
-                                  String thunbnailSmall) {
+    protected void processingDone(String original, String thumbnail) {
         if (listener != null) {
             ChosenImage image = new ChosenImage();
             image.setFilePathOriginal(original);
             image.setFileThumbnail(thumbnail);
-            image.setFileThumbnailSmall(thunbnailSmall);
             listener.onProcessedImage(image);
         }
     }

@@ -22,7 +22,6 @@ public class ChosenImage extends ChosenMedia {
 
     private String fileThumbnail;
 
-    private String fileThumbnailSmall;
 
     public String getFilePathOriginal() {
         return filePathOriginal;
@@ -38,14 +37,6 @@ public class ChosenImage extends ChosenMedia {
 
     public void setFileThumbnail(String fileThumbnail) {
         this.fileThumbnail = fileThumbnail;
-    }
-
-    public String getFileThumbnailSmall() {
-        return fileThumbnailSmall;
-    }
-
-    public void setFileThumbnailSmall(String fileThumbnailSmall) {
-        this.fileThumbnailSmall = fileThumbnailSmall;
     }
 
     @Override

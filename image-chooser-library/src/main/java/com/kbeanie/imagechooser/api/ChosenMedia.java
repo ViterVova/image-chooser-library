@@ -16,7 +16,7 @@ public abstract class ChosenMedia {
     protected SoftReference<Bitmap> getBitmap(String path) {
         SoftReference<Bitmap> bitmap = null;
         try {
-            bitmap = new SoftReference<Bitmap>(BitmapFactory.decodeStream(new FileInputStream(
+            bitmap = new SoftReference<>(BitmapFactory.decodeStream(new FileInputStream(
                     new File(path))));
 
         } catch (FileNotFoundException e) {

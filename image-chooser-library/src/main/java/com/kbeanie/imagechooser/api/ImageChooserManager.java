@@ -24,7 +24,6 @@ import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.text.TextUtils;
@@ -71,55 +70,7 @@ public class ImageChooserManager extends BChooser implements
         super(fragment, type, true);
     }
 
-    /**
-     * Simple constructor for using with a fragment
-     *
-     * @param fragment
-     * @param type
-     */
-    public ImageChooserManager(android.app.Fragment fragment, int type) {
-        super(fragment, type, true);
-    }
 
-    /**
-     * Specify the type {@link ChooserType}
-     * <p>
-     * Optionally, you can control where the exported images with their
-     * thumbnails would be stored.
-     * </p>
-     *
-     * @param activity
-     * @param type
-     * @param folderName
-     * @deprecated Use BChooserPreferences to set your desired folder name
-     */
-    @Deprecated
-    public ImageChooserManager(Activity activity, int type, String folderName) {
-        super(activity, type, folderName, true);
-    }
-
-    /**
-     * @param fragment
-     * @param type
-     * @param folderName
-     * @deprecated Use BChooserPreferences to set your desired folder name
-     */
-    @Deprecated
-    public ImageChooserManager(Fragment fragment, int type, String folderName) {
-        super(fragment, type, folderName, true);
-    }
-
-    /**
-     * @param fragment
-     * @param type
-     * @param folderName
-     * @deprecated Use BChooserPreferences to set your desired folder name
-     */
-    @Deprecated
-    public ImageChooserManager(android.app.Fragment fragment, int type,
-                               String folderName) {
-        super(fragment, type, folderName, true);
-    }
 
     /**
      * Specify the type {@link ChooserType}
@@ -145,51 +96,6 @@ public class ImageChooserManager extends BChooser implements
     public ImageChooserManager(android.app.Fragment fragment, int type,
                                boolean shouldCreateThumbnails) {
         super(fragment, type, shouldCreateThumbnails);
-    }
-
-    /**
-     * Specify the type {@link ChooserType}
-     * <p>
-     * Specify your own foldername and whether you want the generated thumbnails
-     * or not
-     * </p>
-     *
-     * @param activity
-     * @param type
-     * @param foldername
-     * @param shouldCreateThumbnails
-     * @deprecated Use BChooserPreferences to set your desired folder name
-     */
-    @Deprecated
-    public ImageChooserManager(Activity activity, int type, String foldername,
-                               boolean shouldCreateThumbnails) {
-        super(activity, type, foldername, shouldCreateThumbnails);
-    }
-
-    /**
-     * @param fragment
-     * @param type
-     * @param foldername
-     * @param shouldCreateThumbnails
-     * @deprecated Use BChooserPreferences to set your desired folder name
-     */
-    @Deprecated
-    public ImageChooserManager(Fragment fragment, int type, String foldername,
-                               boolean shouldCreateThumbnails) {
-        super(fragment, type, foldername, shouldCreateThumbnails);
-    }
-
-    /**
-     * @param fragment
-     * @param type
-     * @param foldername
-     * @param shouldCreateThumbnails
-     * @deprecated Use BChooserPreferences to set your desired folder name
-     */
-    @Deprecated
-    public ImageChooserManager(android.app.Fragment fragment, int type,
-                               String foldername, boolean shouldCreateThumbnails) {
-        super(fragment, type, foldername, shouldCreateThumbnails);
     }
 
     /**
@@ -243,7 +149,7 @@ public class ImageChooserManager extends BChooser implements
         checkDirectory();
         try {
             Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            filePathOriginal = buildFilePathOriginal(foldername, "jpg");
+            filePathOriginal = buildFilePathOriginal(mainFolder, "jpg");
             intent.putExtra(MediaStore.EXTRA_OUTPUT, buildCaptureUri(filePathOriginal));
             if (extras != null) {
                 intent.putExtras(extras);
@@ -288,8 +194,7 @@ public class ImageChooserManager extends BChooser implements
                     Log.i(TAG, "File: " + filePathOriginal);
                 }
                 String path = filePathOriginal;
-                ImageProcessorThread thread = new ImageProcessorThread(path,
-                        foldername, shouldCreateThumbnails);
+                ImageProcessorThread thread = new ImageProcessorThread(path, mainFolder,thumnailFolder, shouldCreateThumbnails);
                 thread.clearOldFiles(clearOldFiles);
                 thread.setListener(this);
                 thread.setContext(getContext());
@@ -314,12 +219,11 @@ public class ImageChooserManager extends BChooser implements
                     filePaths[i] = item.getUri().toString();
                 }
             }
-            ImageProcessorThread thread = new ImageProcessorThread(filePaths, foldername, shouldCreateThumbnails);
+            ImageProcessorThread thread = new ImageProcessorThread(filePaths, mainFolder, thumnailFolder,shouldCreateThumbnails);
             thread.clearOldFiles(clearOldFiles);
             thread.setListener(this);
             thread.setContext(getContext());
             thread.start();
-//        } else if () {
         } else {
             onError("Image Uri was null!");
         }
@@ -327,8 +231,7 @@ public class ImageChooserManager extends BChooser implements
 
     private void processCameraImage() {
         String path = filePathOriginal;
-        ImageProcessorThread thread = new ImageProcessorThread(path,
-                foldername, shouldCreateThumbnails);
+        ImageProcessorThread thread = new ImageProcessorThread(path, mainFolder,thumnailFolder, shouldCreateThumbnails);
         thread.setListener(this);
         thread.start();
     }

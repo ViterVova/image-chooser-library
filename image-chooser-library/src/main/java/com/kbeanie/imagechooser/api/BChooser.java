@@ -50,13 +50,11 @@ public abstract class BChooser {
 
     protected android.app.Fragment appFragment;
 
-    private final static String THUMBNAIL_SMALL_FOLDER="small";
-
-    private final static String THUMBNAIL_BIG_FOLDER="big";
 
     protected int type;
 
-    protected String foldername;
+    protected String mainFolder;
+    protected String thumnailFolder;
 
     protected boolean shouldCreateThumbnails;
 
@@ -66,32 +64,6 @@ public abstract class BChooser {
 
     protected boolean clearOldFiles;
 
-    @Deprecated
-    public BChooser(Activity activity, int type, String folderName,
-                    boolean shouldCreateThumbnails) {
-        this.activity = activity;
-        this.type = type;
-        this.foldername = folderName;
-        this.shouldCreateThumbnails = shouldCreateThumbnails;
-    }
-
-    @Deprecated
-    public BChooser(Fragment fragment, int type, String foldername,
-                    boolean shouldCreateThumbnails) {
-        this.fragment = fragment;
-        this.type = type;
-        this.foldername = foldername;
-        this.shouldCreateThumbnails = shouldCreateThumbnails;
-    }
-
-    @Deprecated
-    public BChooser(android.app.Fragment fragment, int type, String foldername,
-                    boolean shouldCreateThumbnails) {
-        this.appFragment = fragment;
-        this.type = type;
-        this.foldername = foldername;
-        this.shouldCreateThumbnails = shouldCreateThumbnails;
-    }
 
     public BChooser(Activity activity, int type,
                     boolean shouldCreateThumbnails) {
@@ -147,25 +119,19 @@ public abstract class BChooser {
     public abstract void submit(int requestCode, Intent data);
 
     protected void checkDirectory() throws ChooserException {
-        File directory,small,big;
-        small =new File(FileUtils.getDirectory(foldername+File.separator+THUMBNAIL_SMALL_FOLDER));
-        big=new File(FileUtils.getDirectory(foldername+File.separator+THUMBNAIL_BIG_FOLDER));
-        directory = new File(FileUtils.getDirectory(foldername));
-        Log.e(TAG,big.getAbsolutePath());
-        Log.e(TAG,small.getAbsolutePath());
+        File directory,thumbnail;
+        thumbnail =new File(FileUtils.getDirectory(mainFolder+File.separator+thumnailFolder));
+        directory = new File(FileUtils.getDirectory(mainFolder));
+        Log.d(TAG,thumbnail.getAbsolutePath());
+        Log.d(TAG,directory.getAbsolutePath());
         if (!directory.exists()) {
             if (!directory.mkdirs() && !directory.isDirectory()) {
                 throw new ChooserException("Error creating directory: " + directory);
             }
         }
-        if (!small.exists()) {
-            if (!small.mkdirs() && !small.isDirectory()) {
-                throw new ChooserException("Error creating directory: " + small);
-            }
-        }
-        if (!big.exists()) {
-            if (!big.mkdirs() && !big.isDirectory()) {
-                throw new ChooserException("Error creating directory: " + big);
+        if (!thumbnail.exists()) {
+            if (!thumbnail.mkdirs() && !thumbnail.isDirectory()) {
+                throw new ChooserException("Error creating directory: " +thumnailFolder);
             }
         }
         }
@@ -276,7 +242,8 @@ public abstract class BChooser {
 
     private void initDirectory(Context context) {
         BChooserPreferences preferences = new BChooserPreferences(context);
-        foldername = preferences.getFolderName();
+        mainFolder = preferences.getFolderName();
+        thumnailFolder=preferences.getThumbnailFolderName();
     }
 
     protected String buildFilePathOriginal(String foldername, String extension) {

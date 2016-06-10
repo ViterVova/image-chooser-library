@@ -1,7 +1,6 @@
 package com.kbeanie.imagechooser.factory;
 
-import android.net.Uri;
-import android.provider.MediaStore;
+
 import android.util.Log;
 
 import com.kbeanie.imagechooser.api.FileUtils;
@@ -24,7 +23,6 @@ public class UriFactory {
 
 
     private UriFactory() {
-        // private
     }
 
 
@@ -59,11 +57,4 @@ public class UriFactory {
         return instance;
     }
 
-    /*
-    filePathOriginal = FileUtils.getDirectory(foldername)
-                    + File.separator + DateFactory.getInstance().getTimeInMillis() //Calendar.getInstance().getTimeInMillis()
-                    + ".jpg";
-            intent.putExtra(MediaStore.EXTRA_OUTPUT,
-                    Uri.fromFile(new File(filePathOriginal)));
-     */
 }
