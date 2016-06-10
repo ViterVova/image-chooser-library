@@ -62,7 +62,6 @@ public abstract class BChooser {
 
     protected Bundle extras;
 
-    protected boolean clearOldFiles;
 
 
     public BChooser(Activity activity, int type,
@@ -254,7 +253,4 @@ public abstract class BChooser {
         return Uri.fromFile(new File(filePathOriginal));
     }
 
-    public void clearOldFiles() {
-        this.clearOldFiles = true;
-    }
 }

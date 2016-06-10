@@ -22,6 +22,7 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -37,6 +38,7 @@ import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
 import android.provider.OpenableColumns;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.util.Log;
 
 import com.kbeanie.imagechooser.BuildConfig;
@@ -65,10 +67,6 @@ import static com.kbeanie.imagechooser.helpers.StreamHelper.verifyStream;
 public abstract class MediaProcessorThread extends Thread {
     private final static String TAG = MediaProcessorThread.class.getSimpleName();
 
-    // Number of days to preserve 10 days
-    protected final static int MAX_THRESHOLD_DAYS = (int) (10 * 24 * 60 * 60 * 1000);
-
-    private final static int THUMBNAIL_SMALL= 2;
 
     protected String[] filePaths = new String[0];
 
@@ -84,7 +82,9 @@ public abstract class MediaProcessorThread extends Thread {
 
     protected String mediaExtension;
 
-    protected boolean clearOldFiles = false;
+    private  int height;
+
+    private  int width;
 
 
     public MediaProcessorThread(String filePath, String foldername,String thumbnailFolderName,
@@ -108,10 +108,6 @@ public abstract class MediaProcessorThread extends Thread {
 
     public void setMediaExtension(String extension) {
         this.mediaExtension = extension;
-    }
-
-    public void clearOldFiles(boolean clearOldFiles) {
-        this.clearOldFiles = clearOldFiles;
     }
 
     protected void process() throws ChooserException {
@@ -141,11 +137,17 @@ public abstract class MediaProcessorThread extends Thread {
         if (BuildConfig.DEBUG) {
             Log.i(TAG, "Compressing ... THUMBNAIL SMALL");
         }
-        return compressAndSaveImage(file, THUMBNAIL_SMALL);
+        return compressAndSaveImage(file, height, width);
     }
 
 
-    private String compressAndSaveImage(String fileImage, int scale) throws ChooserException {
+     private int convertDpToPixel(int dp){
+        Resources resources = context.getResources();
+        DisplayMetrics metrics = resources.getDisplayMetrics();
+        return  Math.round(dp * (metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT));
+    }
+
+    private String compressAndSaveImage(String fileImage,int heightDp,int widthDp) throws ChooserException {
 
         FileOutputStream stream = null;
         BufferedInputStream bstream = null;
@@ -161,9 +163,9 @@ public abstract class MediaProcessorThread extends Thread {
             if (boundsOnlyStream != null) {
                 boundsOnlyStream.close();
             }
-            int w, l;
+            int w,h;
             w = optionsForGettingDimensions.outWidth;
-            l = optionsForGettingDimensions.outHeight;
+            h = optionsForGettingDimensions.outHeight;
 
             ExifInterface exif = new ExifInterface(fileImage);
 
@@ -182,46 +184,24 @@ public abstract class MediaProcessorThread extends Thread {
                     rotate = 90;
                     break;
             }
+            Options  options=new Options();
+            int targetW=convertDpToPixel(widthDp);
+            int targetH=convertDpToPixel(heightDp);
 
-            int what = w > l ? w : l;
-
-            Options options = new Options();
-            if (what > 3000) {
-                options.inSampleSize = scale * 6;
-            } else if (what > 2000 && what <= 3000) {
-                options.inSampleSize = scale * 5;
-            } else if (what > 1500 && what <= 2000) {
-                options.inSampleSize = scale * 4;
-            } else if (what > 1000 && what <= 1500) {
-                options.inSampleSize = scale * 3;
-            } else if (what > 400 && what <= 1000) {
-                options.inSampleSize = scale * 2;
-            } else {
-                options.inSampleSize = scale;
-            }
-
-            options.inJustDecodeBounds = false;
-            if (BuildConfig.DEBUG) {
-                Log.i(TAG, "Scale: " + (what / options.inSampleSize));
-                Log.i(TAG, "Rotate: " + rotate);
-            }
+            BufferedInputStream scaledInputStream = new BufferedInputStream(new FileInputStream(fileImage));
+            bitmap = BitmapFactory.decodeStream(scaledInputStream, null, options);
+            bitmap=Bitmap.createScaledBitmap(bitmap,targetW,targetH,true);
             // TODO: Sometime the decode File Returns null for some images
             // For such cases, thumbnails can't be created.
             // Thumbnails will link to the original file
-            BufferedInputStream scaledInputStream = new BufferedInputStream(new FileInputStream(fileImage));
-            bitmap = BitmapFactory.decodeStream(scaledInputStream, null, options);
             //verifyBitmap(fileImage, bitmap);
             scaledInputStream.close();
             if (bitmap == null) {
                 return fileImage;
             }
             File original = new File(fileImage);
-            File file=null;
-            if (THUMBNAIL_SMALL==scale){
-                 file = new File
+            File file= new File
                         (original.getParent() + File.separator + thumbnailFolderName+  File.separator + original.getName());
-                Log.e(TAG,"Mip-map"+file.getAbsolutePath());
-            }
             stream = new FileOutputStream(file);
             if (rotate != 0) {
                 Matrix matrix = new Matrix();
@@ -700,4 +680,11 @@ public abstract class MediaProcessorThread extends Thread {
     public static boolean isMediaDocument(Uri uri) {
         return "com.android.providers.media.documents".equals(uri.getAuthority());
     }
+
+
+    public void setThumbnailSizeInDp(int width,int height) {
+        this.width = width;
+        this.height = height;
+    }
+
 }

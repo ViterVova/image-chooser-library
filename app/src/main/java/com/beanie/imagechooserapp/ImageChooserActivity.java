@@ -109,8 +109,8 @@ public class ImageChooserActivity extends BasicActivity implements
         Bundle bundle = new Bundle();
         bundle.putBoolean(Intent.EXTRA_ALLOW_MULTIPLE, true);
         imageChooserManager.setExtras(bundle);
+        imageChooserManager.setThumbnailSizeInDp(200,200);
         imageChooserManager.setImageChooserListener(this);
-        imageChooserManager.clearOldFiles();
         try {
             pbar.setVisibility(View.VISIBLE);
             filePath = imageChooserManager.choose();

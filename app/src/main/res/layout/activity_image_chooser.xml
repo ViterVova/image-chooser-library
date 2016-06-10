@@ -20,15 +20,14 @@
 
     <ImageView
         android:id="@+id/imageViewThumbSmall"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_below="@id/imageViewThumb"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="10dp"
+        android:layout_width="74dp"
+        android:layout_height="100dp"
         android:background="@drawable/image_border"
         android:padding="10dp"
         android:scaleType="fitCenter"
-        android:src="@drawable/ic_launcher" />
+        android:src="@drawable/ic_launcher"
+        android:layout_below="@+id/imageViewThumb"
+        android:layout_centerHorizontal="true" />
 
     <TextView
         android:id="@+id/textViewFile"

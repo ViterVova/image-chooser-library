@@ -49,6 +49,11 @@ public class ImageChooserManager extends BChooser implements
 
     private ImageChooserListener listener;
 
+
+    private static int thumbnailHeightDp=100;
+
+    private static int thumbnailWidthDp=74;
+
     /**
      * Simplest constructor. Specify the type
      * {@link ChooserType}
@@ -195,8 +200,8 @@ public class ImageChooserManager extends BChooser implements
                 }
                 String path = filePathOriginal;
                 ImageProcessorThread thread = new ImageProcessorThread(path, mainFolder,thumnailFolder, shouldCreateThumbnails);
-                thread.clearOldFiles(clearOldFiles);
                 thread.setListener(this);
+                thread.setThumbnailSizeInDp(thumbnailWidthDp,thumbnailHeightDp);
                 thread.setContext(getContext());
                 thread.start();
             }
@@ -220,8 +225,8 @@ public class ImageChooserManager extends BChooser implements
                 }
             }
             ImageProcessorThread thread = new ImageProcessorThread(filePaths, mainFolder, thumnailFolder,shouldCreateThumbnails);
-            thread.clearOldFiles(clearOldFiles);
             thread.setListener(this);
+            thread.setThumbnailSizeInDp(thumbnailWidthDp, thumbnailHeightDp);
             thread.setContext(getContext());
             thread.start();
         } else {
@@ -233,6 +238,7 @@ public class ImageChooserManager extends BChooser implements
         String path = filePathOriginal;
         ImageProcessorThread thread = new ImageProcessorThread(path, mainFolder,thumnailFolder, shouldCreateThumbnails);
         thread.setListener(this);
+        thread.setThumbnailSizeInDp(thumbnailWidthDp,thumbnailHeightDp);
         thread.start();
     }
 
@@ -255,5 +261,10 @@ public class ImageChooserManager extends BChooser implements
         if (listener != null) {
             listener.onImagesChosen(images);
         }
+    }
+
+    public void setThumbnailSizeInDp(int width,int height){
+        this.thumbnailWidthDp=width;
+        this.thumbnailHeightDp=height;
     }
 }

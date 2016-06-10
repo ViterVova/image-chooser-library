@@ -118,7 +118,6 @@ public class ImageProcessorThread extends MediaProcessorThread {
         if (BuildConfig.DEBUG) {
             Log.i(TAG, "Processing Image File: " + filePath);
         }
-
         // Picasa on Android >= 3.0
         if (filePath != null && filePath.startsWith("content:")) {
             filePath = getAbsoluteImagePathFromUri(Uri.parse(filePath));
